@@ -1,0 +1,50 @@
+name: brew bump
+
+# Watches every formula's livecheck block and opens a version-bump PR when upstream
+# moves. A formula without a livecheck block is invisible here — see CLAUDE.md.
+
+on:
+  schedule:
+    # 07:35 UTC daily, off the top of the hour to avoid the cron stampede.
+    - cron: "35 7 * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/autobump.yml
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  autobump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@fd832223f9f99ebf0244dd20658680e5d4aca049 # 2026.08.03.2
+
+      - name: Set up git
+        id: git_setup
+        uses: Homebrew/actions/git-user-config@fd832223f9f99ebf0244dd20658680e5d4aca049 # 2026.08.03.2
+
+      - name: Bump formulae
+        env:
+          # Deliberately NOT secrets.GITHUB_TOKEN. GitHub does not trigger workflows from
+          # events created by the default token, so a PR opened with it would never run
+          # test-bot, never build bottles, and never publish. HOMEBREW_BUMP_TOKEN is a
+          # fine-grained PAT scoped to this repo with Contents + Pull requests write.
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_BUMP_TOKEN }}
+          HOMEBREW_GIT_COMMITTER_NAME: ${{ steps.git_setup.outputs.name }}
+          HOMEBREW_GIT_COMMITTER_EMAIL: ${{ steps.git_setup.outputs.email }}
+          # `scrothers/tap`, not `scrothers/homebrew-tap`. brew bump wants the tap name;
+          # brew pr-pull wants the repository name. They are not interchangeable.
+          TAP_NAME: ${{ steps.set-up-homebrew.outputs.tap-name }}
+        run: brew bump --no-fork --open-pr --formulae --bump-synced --tap="$TAP_NAME"

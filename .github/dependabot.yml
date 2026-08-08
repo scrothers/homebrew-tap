@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # Keeps the SHA pins on actions/* and the lint actions fresh. Note that
+  # Homebrew/actions/* are also SHA-pinned but Dependabot does not track them — refresh
+  # those by hand against `gh api repos/Homebrew/actions/releases/latest`.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    # Wait a week before adopting a freshly published version. A compromised release is
+    # usually caught and yanked within days, and nothing here is urgent enough to want
+    # the bleeding edge.
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"

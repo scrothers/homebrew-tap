@@ -1,0 +1,93 @@
+name: auto-publish
+
+# Closes the loop on autobump.yml: when test-bot goes green on a `brew bump` PR, dispatch
+# publish.yml so bottles are uploaded and main is fast-forwarded without a human.
+#
+# `workflow_run` is used rather than `pull_request_target` on purpose. It fires in the
+# base-repo context and never checks out PR content, so nothing from the head branch is
+# executed here — the only thing taken from the PR is its number.
+#
+# GITHUB_TOKEN suffices for the dispatch: workflow_dispatch and repository_dispatch are
+# the documented exceptions to GitHub's "events from GITHUB_TOKEN do not trigger
+# workflows" rule. The PAT is needed only to *open* the bump PR, in autobump.yml.
+
+# zizmor flags workflow_run as fundamentally dangerous, and it usually is: the common
+# failure is checking out and running head-branch code with a write-scoped token. This
+# job never checks anything out. It reads a PR number, verifies the run came from a
+# branch in this repo, that the author is the owner, and that the body carries brew's
+# own bump marker — then dispatches. Nothing from the PR is executed.
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: ["brew test-bot"]
+    types:
+      - completed
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  dispatch:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Resolve the pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr_json=$(gh api "repos/${REPO}/commits/${HEAD_SHA}/pulls" \
+            --jq '[.[] | select(.state == "open")] | first')
+
+          if [[ -z "$pr_json" || "$pr_json" == "null" ]]; then
+            echo "no open pull request for ${HEAD_SHA}; nothing to publish"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          number=$(jq -r '.number' <<<"$pr_json")
+          association=$(jq -r '.author_association' <<<"$pr_json")
+          body=$(jq -r '.body // ""' <<<"$pr_json")
+
+          # Only ever auto-publish our own bump PRs. Anything hand-written, or from
+          # anyone else, is left for manual dispatch.
+          if [[ "$association" != "OWNER" ]]; then
+            echo "PR #${number}: author association is ${association}, not OWNER; skipping"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # shellcheck disable=SC2016  # the backticks are literal Markdown, not a subshell
+          if ! grep -qF 'Created with `brew bump-formula-pr`' <<<"$body"; then
+            echo "PR #${number}: not a brew bump PR; skipping"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "PR #${number} qualifies for automatic publishing"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+          echo "number=${number}" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch publish.yml
+        if: steps.pr.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          gh workflow run publish.yml \
+            --ref main \
+            -f pull_request="$PR_NUMBER" \
+            -f head_sha="$HEAD_SHA"

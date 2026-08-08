@@ -1,0 +1,11 @@
+# Issues are disabled on this repository. This file is here so that if they are ever
+# turned back on, the blank-issue path stays closed and people are pointed somewhere
+# useful instead.
+blank_issues_enabled: false
+contact_links:
+  - name: This tap is not accepting contributions
+    url: https://github.com/scrothers/homebrew-tap#about
+    about: Personal tap. Please report bugs to the upstream project rather than here.
+  - name: Homebrew documentation
+    url: https://docs.brew.sh
+    about: Questions about brew itself, tapping, or writing your own formulae.

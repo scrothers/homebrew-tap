@@ -1,0 +1,16 @@
+# Bottle artefacts `brew bottle` / `brew test-bot` drop in the tap root
+*.bottle.*
+*.bottle.json
+*.tar.gz
+
+# brew test-bot run summary
+steps_output.txt
+brew-test-bot.log
+
+# macOS
+.DS_Store
+
+# Editor / tooling scratch
+.idea/
+.vscode/
+*.swp

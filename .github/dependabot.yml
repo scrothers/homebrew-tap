@@ -7,6 +7,11 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # Wait a week before adopting a freshly published version. A compromised release is
+    # usually caught and yanked within days, and nothing here is urgent enough to want
+    # the bleeding edge.
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns:

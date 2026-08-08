@@ -102,10 +102,13 @@ lint: ## Security-audit the GitHub Actions workflows (zizmor)
 	@# actionlint and shellcheck are not run here: `brew style` already runs both over
 	@# .github/workflows, so `make style` and `make syntax` cover them. zizmor is the
 	@# part Homebrew does not do.
+	@# Audit `.` rather than .github/workflows/, to match what the action does in CI.
+	@# zizmor also inspects dependabot.yml and action definitions, so a narrower path
+	@# passes locally and then fails on the runner.
 	@if command -v zizmor >/dev/null 2>&1; then \
-	  zizmor .github/workflows/; \
+	  zizmor .; \
 	elif command -v uvx >/dev/null 2>&1; then \
-	  uvx zizmor@$(ZIZMOR) .github/workflows/; \
+	  uvx zizmor@$(ZIZMOR) .; \
 	else \
 	  echo "zizmor not installed and uvx unavailable; skipping (CI still runs it)"; \
 	fi

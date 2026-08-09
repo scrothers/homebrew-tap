@@ -46,7 +46,7 @@ Bottles are published to [GitHub Packages](https://github.com/scrothers?tab=pack
 <!-- FORMULAE:START -->
 | Formula | Description | Version | License |
 | ------- | ----------- | ------- | ------- |
-| _Coming soon_ | Formulae land here as they are added. | — | — |
+| [`pmmcp`](https://github.com/scrothers/pmmcp) | Agent-native process supervisor with an MCP control plane | `1.0.0` | Apache-2.0 |
 <!-- FORMULAE:END -->
 
 <sub>This table is generated from `Formula/*.rb` by `make readme`. Do not edit it by hand.</sub>

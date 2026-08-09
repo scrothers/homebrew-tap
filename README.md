@@ -125,8 +125,13 @@ make all                                    # everything CI checks
 
 `make all` is the pre-push gate. `make help` lists every target.
 
+The full walkthrough for adding a formula — build recipes per upstream build system,
+dependencies, livecheck, test blocks, bottling and publishing — is in
+**[AGENTS.md](AGENTS.md)**.
+
 ## Documentation
 
+- [AGENTS.md](AGENTS.md) — preparing a build for this tap, end to end
 - [Homebrew docs](https://docs.brew.sh)
 - [`brew help`](https://docs.brew.sh/Manpage) / `man brew`
 - [How to Create and Maintain a Tap](https://docs.brew.sh/How-to-Create-and-Maintain-a-Tap)

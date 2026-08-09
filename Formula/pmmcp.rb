@@ -24,10 +24,19 @@ class Pmmcp < Formula
 
     # Upstream puts its version vars in internal/version, not the `main.*` names
     # `std_go_args(ldflags: :goreleaser)` assumes, so they are set explicitly.
-    # Commit and BuildDate are deliberately left at their "unknown" defaults: there is
-    # no git metadata in a release tarball, and stamping a timestamp would make the
-    # bottle unreproducible.
-    ldflags = "-X github.com/scrothers/pmmcp/internal/version.Version=#{version}"
+    #
+    # `time` is safe to stamp: during a build Homebrew sets SOURCE_DATE_EPOCH from the
+    # tarball's mtime and Formula#time reads it, so this is fixed per release rather
+    # than wall-clock.
+    #
+    # Commit stays at its "unknown" default. A release tarball carries no git metadata,
+    # and hardcoding the tag's SHA would rot silently: `brew bump-formula-pr` rewrites
+    # only url and sha256, so the pinned commit would go stale and misreport which code
+    # is in the binary.
+    ldflags = %W[
+      -X github.com/scrothers/pmmcp/internal/version.Version=#{version}
+      -X github.com/scrothers/pmmcp/internal/version.BuildDate=#{time.iso8601}
+    ]
 
     system "go", "build", *std_go_args(output: bin/"pmmcp", ldflags:), "./cmd/pmmcp"
     system "go", "build", *std_go_args(output: bin/"pmmcpd", ldflags:), "./cmd/pmmcpd"

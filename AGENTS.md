@@ -255,6 +255,51 @@ sha256 on_arch_conditional(arm: "aaaa", intel: "bbbb")
 Prebuilt binaries still get bottled. That is intentional — the bottle pins the exact
 artefact and makes installs a single GHCR pull.
 
+### 3e. Versioned formulae
+
+To keep an old series installable alongside the current one, add `Formula/<name>@<major>.rb`.
+Pin the **major**, matching `node@22` and `openssl@3`, unless upstream breaks compatibility
+on minors the way Python does — otherwise every minor needs its own file.
+
+The class name must match `Formulary.class_s`, which is not obvious here:
+`pmmcp@1` → `PmmcpAT1`, `pmmcp@1.0` → `PmmcpAT10`.
+
+Three things a versioned formula needs that the main one does not:
+
+```ruby
+keg_only :versioned_formula
+```
+
+No `head` spec — a versioned formula pins a series, and the default branch is not in it.
+
+And a livecheck scoped to the series. **Do not use `github_latest` here.** That strategy
+only ever inspects the single newest release, so the moment upstream ships 2.0 it stops
+matching and the formula silently stops being bumped — the exact failure mode the
+`livecheck` rule exists to prevent. Enumerate releases instead:
+
+```ruby
+livecheck do
+  url :stable
+  regex(/^v?(1(?:\.\d+)+)$/i)
+  strategy :github_releases do |json, regex|
+    json.map do |release|
+      next if release["draft"] || release["prerelease"]
+
+      match = release["tag_name"]&.match(regex)
+      next if match.blank?
+
+      match[1]
+    end
+  end
+end
+```
+
+Check the regex rejects what it should before committing — `1(?:\.\d+)+` matches `v1.10.3`
+and correctly refuses `v2.0.0` and `v11.0.0`.
+
+Every retained version costs a full bottle build on every CI run, so add one when you
+actually need to hold a series back, not speculatively.
+
 ---
 
 ## 4. Dependencies

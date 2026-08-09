@@ -119,9 +119,10 @@ module NewFormula
         # TODO: declare build and runtime dependencies with depends_on.
 
         def install
-          # TODO: replace with the real build.
+          # TODO: replace with the real build. See AGENTS.md section 3 for worked
+          # examples and the dependency rules that go with each.
           #
-          #   Go:    system "go", "build", *std_go_args(ldflags: "-s -w")
+          #   Go:    system "go", "build", *std_go_args(ldflags:)
           #   Rust:  system "cargo", "install", *std_cargo_args
           #   Make:  system "make", "install", "PREFIX=\#{prefix}"
           #   CMake: system "cmake", "-S", ".", "-B", "build", *std_cmake_args

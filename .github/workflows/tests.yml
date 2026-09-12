@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@fd832223f9f99ebf0244dd20658680e5d4aca049 # 2026.08.03.2
+        uses: Homebrew/actions/setup-homebrew@f8d4222eb633e65c2a0157383cf80861fc7fae7f # 2026.09.07.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -94,7 +94,7 @@ jobs:
           persist-credentials: false
 
       - name: Audit workflows with zizmor
-        uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
+        uses: zizmorcore/zizmor-action@70fb788f84895a7701f5643d103d587e460b5c99 # v0.6.3
         with:
           version: 1.29.0
           # Inline PR annotations rather than the security tab; the latter would need
